@@ -82,6 +82,7 @@ function App() {
     }
   }
 
+  // Bottone inizia turno e notifica
   async function iniziaTurno() {
     const ora = new Date()
     setOraEntrata(ora)
