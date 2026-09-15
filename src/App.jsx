@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { supabase } from "./supabaseClient"
+import "./App.css"
 
 function App() {
   // State
@@ -11,7 +12,7 @@ function App() {
   const [messaggioSalvato, setMessaggioSalvato] = useState(false)
   const [oraEntrata, setOraEntrata] = useState(() => {
     const salvato = localStorage.getItem('oraEntrata')
-    return salvato ? new Date(salvato) : null 
+    return salvato ? new Date(salvato) : null
   })
 
 
@@ -19,30 +20,30 @@ function App() {
 
 
   useEffect(() => {
-    if('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
     }
   }, []);
 
   // Calcolo minuti totali
-  if(oraEntrata && oraUscita) {
+  if (oraEntrata && oraUscita) {
     minutiTotali = (oraUscita - oraEntrata) / (1000 * 60)
   }
 
-  // Se cliccato bottone termina vengono inseriti i dati nel database 
+  // Se cliccato bottone termina vengono inseriti i dati nel database
   async function terminaTurno() {
     const uscita = new Date();
     setOraUscita(uscita)
     localStorage.removeItem('oraEntrata')
 
-    if('serviceWorker' in navigator) {
+    if ('serviceWorker' in navigator) {
       const registration = await navigator.serviceWorker.ready
       const notifiche = await registration.getNotifications({ tag: "turno-attivo" })
       notifiche.forEach(n => n.close())
     }
 
     const minuti = (uscita - oraEntrata) / (1000 * 60)
-    
+
     const { data, error } = await supabase
       .from("turni") // nella tabella turni
       .insert({ // inserisci i seguenti dati
@@ -52,23 +53,23 @@ function App() {
       })
       .select()
 
-      if(error) {
-        console.error("Errore:", error)
-        return
-      }
+    if (error) {
+      console.error("Errore:", error)
+      return
+    }
 
-      console.log("Turno salvato:", data)
+    console.log("Turno salvato:", data)
   }
 
 
-  // Se cliccato bottone lista vengono presi e ordinati i dati dal più recente al meno recente 
+  // Se cliccato bottone lista vengono presi e ordinati i dati dal più recente al meno recente
   async function prendiOrdina() {
-    const{ data, error } = await supabase
-    .from("turni")  
-    .select("id, entrata, uscita, minuti_totali")
-    .order("entrata", {ascending: false });
+    const { data, error } = await supabase
+      .from("turni")
+      .select("id, entrata, uscita, minuti_totali")
+      .order("entrata", { ascending: false });
 
-    if(error) {
+    if (error) {
       console.log("Errore:", error);
       return;
     }
@@ -77,7 +78,7 @@ function App() {
   }
 
   async function chiediPermessoNotifiche() {
-    if(Notification.permission === "default") {
+    if (Notification.permission === "default") {
       await Notification.requestPermission();
     }
   }
@@ -90,11 +91,11 @@ function App() {
 
     await chiediPermessoNotifiche()
 
-    if(Notification.permission === "granted") {
+    if (Notification.permission === "granted") {
       const registration = await navigator.serviceWorker.ready
 
       registration.showNotification("Turno in corso", {
-        body: `Iniziato alle ${ora.toLocaleTimeString('it-IT', {hour: '2-digit', minute: '2-digit'})}`,
+        body: `Iniziato alle ${ora.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit' })}`,
         tag: "turno-attivo",
         requireInteraction: true,
         silent: true
@@ -111,23 +112,23 @@ function App() {
     const minuti = (uscita - entrata) / (1000 * 60)
 
 
-    const { data, error } = await supabase 
-    .from("turni")
-    .insert({
-      entrata: entrata,
-      uscita: uscita,
-      minuti_totali: Math.floor(minuti)
-    })
-    .select()
+    const { data, error } = await supabase
+      .from("turni")
+      .insert({
+        entrata: entrata,
+        uscita: uscita,
+        minuti_totali: Math.floor(minuti)
+      })
+      .select()
 
 
-    // Messaggio di salvataggio avvenuto con successo 
+    // Messaggio di salvataggio avvenuto con successo
     setMessaggioSalvato(true);
     setTimeout(() => {
       setMessaggioSalvato(false);
     }, 2000)
 
-    if(error) {
+    if (error) {
       console.error("Errore:", error)
       return
     }
@@ -136,56 +137,100 @@ function App() {
   }
 
   return (
-    <div>
-      <h1>Ore Lavorate</h1>
+    <div className="app">
+      <header className="app__header">
+        <h1 className="app__title">Timely</h1>
+        <p className="app__subtitle">registro ore di lavoro</p>
+      </header>
 
-      {!oraEntrata ? (
-        <button onClick={iniziaTurno}>
-          ▶ Inizia turno
-        </button>
-      ) : !oraUscita ? (
-        <button onClick={terminaTurno}>
-          ⏹ Termina turno
-        </button>
-      ) : (
-        <button onClick={() => setOraEntrata(new Date(), setOraUscita(null))}>
-          ▶ Inizia turno
-        </button>
+      {(oraEntrata || oraUscita) && (
+        <section className={`stato ${oraEntrata && !oraUscita ? 'stato--attivo' : ''} ${oraUscita ? 'stato--chiuso' : ''}`}>
+          {oraEntrata && (
+            <div className="stato__riga">
+              <span>Entrata</span>
+              <span className="stato__valore">
+                {oraEntrata.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false })}
+              </span>
+            </div>
+          )}
+
+          {oraUscita && (
+            <div className="stato__riga">
+              <span>Uscita</span>
+              <span className="stato__valore">
+                {oraUscita.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false })}
+              </span>
+            </div>
+          )}
+
+          {oraEntrata && oraUscita && (
+            <div className="stato__totale">
+              <span>Totale</span>
+              <span className="stato__totale-valore">
+                {Math.floor(minutiTotali / 60)}h {Math.floor(minutiTotali % 60)}m
+              </span>
+            </div>
+          )}
+        </section>
       )}
 
-      <button onClick={() => setMostraForm(true)}>
-        Inserisci manualmente
-      </button>
-      
-      <div>
-        {mostraForm && (
-          <div>
-            <label htmlFor="entrataInput">Entrata:</label>
-            <input
-              type="datetime-local"
-              value = {inputEntrata}
-              onChange={(e) => setInputEntrata(e.target.value)}
-            />
-
-            <label htmlFor="uscitaInput">Uscita:</label>
-            <input
-            type="datetime-local"
-              value = {inputUscita}
-              onChange={(e) => setInputUscita(e.target.value)}
-            />
-
-            <button onClick={() => salvaManuale(setMostraForm(false))}>
-              Salva
-            </button>
-          </div>
+      <div className="azioni">
+        {!oraEntrata ? (
+          <button className="btn-inizia" onClick={iniziaTurno}>
+            ▶ Inizia turno
+          </button>
+        ) : !oraUscita ? (
+          <button className="btn-termina" onClick={terminaTurno}>
+            ⏹ Termina turno
+          </button>
+        ) : (
+          <button className="btn-inizia" onClick={() => { setOraEntrata(new Date()); setOraUscita(null) }}>
+            ▶ Inizia turno
+          </button>
         )}
+
+        <button className="btn-secondario" onClick={() => setMostraForm(true)}>
+          Inserisci manualmente
+        </button>
       </div>
 
-      <button onClick={() => prendiOrdina()}>
-        Lista Turni 
+      {mostraForm && (
+        <div className="form-manuale">
+          <div className="campo">
+            <label htmlFor="entrataInput">Entrata</label>
+            <input
+              id="entrataInput"
+              type="datetime-local"
+              value={inputEntrata}
+              onChange={(e) => setInputEntrata(e.target.value)}
+            />
+          </div>
+
+          <div className="campo">
+            <label htmlFor="uscitaInput">Uscita</label>
+            <input
+              id="uscitaInput"
+              type="datetime-local"
+              value={inputUscita}
+              onChange={(e) => setInputUscita(e.target.value)}
+            />
+          </div>
+
+          <button className="btn-salva" onClick={() => { salvaManuale(); setMostraForm(false) }}>
+            Salva
+          </button>
+        </div>
+      )}
+
+      {messaggioSalvato && (
+        <div className="toast">Turno salvato con successo!</div>
+      )}
+
+      <button className="btn-lista" onClick={() => prendiOrdina()}>
+        Lista turni
       </button>
 
-      <div>
+      <div className="lista">
         {listaTurni.map((turno, index) => {
           const entrata = new Date(turno.entrata);
           const uscita = new Date(turno.uscita);
@@ -195,68 +240,36 @@ function App() {
             year: 'numeric'
           });
 
-          
-          let mesePrecedente = null; 
-          if(index > 0) {
-          mesePrecedente = new Date(listaTurni[index-1].entrata).toLocaleDateString('it-IT', {
-            month: 'long',
-            year: 'numeric'
-          });
-        }
+          let mesePrecedente = null;
+          if (index > 0) {
+            mesePrecedente = new Date(listaTurni[index - 1].entrata).toLocaleDateString('it-IT', {
+              month: 'long',
+              year: 'numeric'
+            });
+          }
 
           return (
             <div key={turno.id}>
-              {(index == 0 || meseAttuale != mesePrecedente) && (
-                <h1>{entrata.toLocaleDateString('it-IT', {month:'long', year:'numeric'})}</h1>
+              {(index === 0 || meseAttuale !== mesePrecedente) && (
+                <h2 className="lista__mese">{meseAttuale}</h2>
               )}
-              <p>
-                🟢 {entrata.toLocaleDateString('it-IT')} -
-                Entrata: {entrata.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false})} |
-                Uscita: {uscita.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false })} | 
-                Totale: {Math.floor(turno.minuti_totali / 60)}h {turno.minuti_totali % 60}m
-              </p>
+              <div className="turno">
+                <span className="turno__data">
+                  {entrata.toLocaleDateString('it-IT')}
+                </span>
+                <span className="turno__orari">
+                  {entrata.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                  {' → '}
+                  {uscita.toLocaleTimeString('it-IT', { hour: '2-digit', minute: '2-digit', hour12: false })}
+                </span>
+                <span className="turno__totale">
+                  {Math.floor(turno.minuti_totali / 60)}h {turno.minuti_totali % 60}m
+                </span>
+              </div>
             </div>
           )
         })}
       </div>
-
-
-
-      <div>
-        {messaggioSalvato && (
-          <div>
-            <p>Turno salvato con successo!</p>
-          </div>
-        )}
-      </div>
-
-      {oraEntrata && ( // si mostra il p solo quando oraEntrata non è NULL
-        <p>
-          🟢 Entrata: {oraEntrata.toLocaleTimeString('it-IT', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-          })}
-        </p>
-      )}
-
-      {oraUscita && (
-        <p>
-          🔴 Uscita: {oraUscita.toLocaleTimeString('it-IT', {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: false,
-          })} <br></br>
-        </p>
-      )}
-
-      {oraEntrata && oraUscita && (
-        <p>
-          Totale: {Math.floor(minutiTotali / 60)} ore, {" "}
-          {Math.floor(minutiTotali % 60)} minuti
-        </p>
-      )}
-
     </div>
   )
 }
