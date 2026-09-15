@@ -14,6 +14,7 @@ function App() {
     const salvato = localStorage.getItem('oraEntrata')
     return salvato ? new Date(salvato) : null
   })
+  const [meseSelezionato, setMeseSelezionato] = useState("tutti")
 
 
   let minutiTotali = 0
@@ -136,6 +137,24 @@ function App() {
     console.log("Turno salvato:", data)
   }
 
+  // Mesi presenti nella lista caricata, nell'ordine in cui compaiono (dal più recente)
+  const mesiDisponibili = []
+  const vistiMesi = new Set()
+  listaTurni.forEach((turno) => {
+    const mese = new Date(turno.entrata).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' })
+    if (!vistiMesi.has(mese)) {
+      vistiMesi.add(mese)
+      mesiDisponibili.push(mese)
+    }
+  })
+
+  // Turni da mostrare, filtrati per il mese scelto
+  const turniFiltrati = meseSelezionato === "tutti"
+    ? listaTurni
+    : listaTurni.filter((turno) =>
+        new Date(turno.entrata).toLocaleDateString('it-IT', { month: 'long', year: 'numeric' }) === meseSelezionato
+      )
+
   return (
     <div className="app">
       <header className="app__header">
@@ -230,8 +249,24 @@ function App() {
         Lista turni
       </button>
 
+      {listaTurni.length > 0 && (
+        <div className="campo campo--filtro">
+          <label htmlFor="filtroMese">Mese</label>
+          <select
+            id="filtroMese"
+            value={meseSelezionato}
+            onChange={(e) => setMeseSelezionato(e.target.value)}
+          >
+            <option value="tutti">Tutti i mesi</option>
+            {mesiDisponibili.map((mese) => (
+              <option key={mese} value={mese}>{mese}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
       <div className="lista">
-        {listaTurni.map((turno, index) => {
+        {turniFiltrati.map((turno, index) => {
           const entrata = new Date(turno.entrata);
           const uscita = new Date(turno.uscita);
 
@@ -242,7 +277,7 @@ function App() {
 
           let mesePrecedente = null;
           if (index > 0) {
-            mesePrecedente = new Date(listaTurni[index - 1].entrata).toLocaleDateString('it-IT', {
+            mesePrecedente = new Date(turniFiltrati[index - 1].entrata).toLocaleDateString('it-IT', {
               month: 'long',
               year: 'numeric'
             });

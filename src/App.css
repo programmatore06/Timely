@@ -273,6 +273,42 @@ button:focus-visible {
   border-color: var(--brass);
 }
 
+/* ---------- Filtro mese ---------- */
+
+.campo--filtro {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.campo--filtro label {
+  flex-shrink: 0;
+}
+
+.campo--filtro select {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius);
+  padding: 8px 32px 8px 12px;
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 0.85rem;
+  appearance: none;
+  -webkit-appearance: none;
+  color-scheme: dark;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23c98a3f' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+
+.campo--filtro select:focus-visible {
+  outline: none;
+  border-color: var(--brass);
+}
+
 /* ---------- Messaggio salvato ---------- */
 
 .toast {
